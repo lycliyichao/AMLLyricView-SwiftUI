@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import AMLLView
 
 public struct AMLLView: View {
     // MARK: Binding Data
