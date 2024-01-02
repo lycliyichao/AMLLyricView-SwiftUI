@@ -23,7 +23,7 @@ public struct AAMLLrcConfig : Equatable {
     public var lrcURLType   : LyricURLType
     public var lrcURL       : URL
     public var coderType    : String.Encoding
-    
+
     public init(lrcType: LyricsType, lrcURLType: LyricURLType, lrcURL: URL, coderType: String.Encoding = .utf8) {
         self.lrcType = lrcType
         self.lrcURLType = lrcURLType
@@ -40,9 +40,9 @@ public struct AAMLViewConfig {
     public var subFontColor         : Color
     public var highlightAnchor      : UnitPoint
     public var fontAnchor           : UnitPoint // .leading / .center / .trading
-    public var translateAnimation   : Animation
-    
-    public init(isCloseDefaultScroll: Bool, mainFontSize: Font, mainFontColor: Color, subFontSize: Font, subFontColor: Color, highlightAnchor: UnitPoint, fontAnchor: UnitPoint, translateAnimation: Animation) {
+    public var transformAnimation   : Animation
+
+    public init(isCloseDefaultScroll: Bool = false, mainFontSize: Font, mainFontColor: Color, subFontSize: Font, subFontColor: Color, highlightAnchor: UnitPoint, fontAnchor: UnitPoint, transformAnimation: Animation) {
         self.isCloseDefaultScroll = isCloseDefaultScroll
         self.mainFontSize = mainFontSize
         self.mainFontColor = mainFontColor
@@ -50,18 +50,18 @@ public struct AAMLViewConfig {
         self.subFontColor = subFontColor
         self.highlightAnchor = highlightAnchor
         self.fontAnchor = fontAnchor
-        self.translateAnimation = translateAnimation
+        self.transformAnimation = transformAnimation
     }
 }
 
 public let defaultAAMLViewConfig =  AAMLViewConfig(isCloseDefaultScroll: false,
-                                                      mainFontSize: .title,
-                                                      mainFontColor: .primary.opacity(0.8),
-                                                      subFontSize: .caption2,
-                                                      subFontColor: .primary.opacity(0.8),
-                                                      highlightAnchor: UnitPoint(x: 0.5, y: 0.08),
-                                                      fontAnchor: .leading,
-                                                      translateAnimation: .easeInOut)
+                                                   mainFontSize: .title,
+                                                   mainFontColor: .primary.opacity(0.8),
+                                                   subFontSize: .caption2,
+                                                   subFontColor: .primary.opacity(0.8),
+                                                   highlightAnchor: UnitPoint(x: 0.5, y: 0.08),
+                                                   fontAnchor: .leading,
+                                                   transformAnimation: .easeInOut)
 
 public class LrcLyric: Identifiable {
     public var indexNum: Int
@@ -92,6 +92,6 @@ func loadGBKFile(fileURL: URL) -> String? {
     } catch {
         print("Error loading file: \(error)")
     }
-    
+
     return nil
 }

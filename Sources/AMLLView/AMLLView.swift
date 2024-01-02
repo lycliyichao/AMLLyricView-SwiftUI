@@ -119,7 +119,7 @@ public struct AMLLView: View {
 extension AMLLView {
     func calcLrcScrollViewDragEnd(proxy: ScrollViewProxy) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            withAnimation(viewConfig.translateAnimation) {
+            withAnimation(viewConfig.transformAnimation) {
                 scorllValue = 0
                 isScrollViewGestrueScroll = false
                 if let lyricsCount = lyricsArray?.count, lyricsCount >= 1, lrcHightlightCellIndex > 0 {
@@ -134,7 +134,7 @@ extension AMLLView {
     func calcLrcScrollViewNewHightlightCell(proxy: ScrollViewProxy) {
         if let lyricsCount = lyricsArray?.count, lyricsCount >= 1, !isScrollViewGestrueScroll {
             DispatchQueue.main.async {
-                withAnimation(viewConfig.translateAnimation) {
+                withAnimation(viewConfig.transformAnimation) {
                     let scrollToIndex = lrcHightlightCellIndex > 0 ? lrcHightlightCellIndex - 1 : lrcHightlightCellIndex
                     proxy.scrollTo(lyricsArray?[scrollToIndex].id, anchor: scrollToIndex > 0 ? viewConfig.highlightAnchor : .top)
                 }
@@ -259,7 +259,7 @@ struct LrcLyricCell: View {
             EmptyView().frame(height: 12)
         }
     }
-    
+
     private func updateBlurRadius() {
         blurRadius = isHighlight ? 0 : (isScrollViewGestrueScroll ? 0.5 : 1.2)
     }
