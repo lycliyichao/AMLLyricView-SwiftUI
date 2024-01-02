@@ -1,4 +1,5 @@
-# AMLLyricView-SwiftUI (AppleMusic Like Lyric View - SwiftUI)
+# AMLLyricView-SwiftUI   
+(AppleMusic Like Lyric View - SwiftUI)
 A demo package for LyricView 'a little bit' like AppleMusic style.  
 一个基于SwiftUI的歌词滚动显示页面
 
