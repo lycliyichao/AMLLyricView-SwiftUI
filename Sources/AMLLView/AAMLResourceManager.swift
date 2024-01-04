@@ -8,9 +8,11 @@
 import Foundation
 
 // MARK: shared
-public class AAMLResourceManager {
-    public static let shared = AAMLResourceManager()
-    
+public class AMLLResourceManager {
+    public static let shared = AMLLResourceManager()
+}
+
+extension AMLLResourceManager {
     // Combine
     public func handlerLrc(urlType: LyricURLType, URL: URL, coderType: String.Encoding = .utf8, withExtraInfo: Bool = true) async throws -> [LrcLyric] {
         do {
@@ -55,9 +57,29 @@ public class AAMLResourceManager {
     }
 }
 
+
+extension AMLLResourceManager {
+    public func handleTtml(urlType: LyricURLType, URL: URL, coderType: String.Encoding = .utf8)  async throws -> [TtmlLyric] {
+        do {
+            var fileData : Data? = nil
+            if urlType == .remote {
+                let downloadURL = try await downloadFile(remoteURL: URL)
+                fileData        = try await readFileFromCache(url: downloadURL)
+            } else {
+                fileData        = try await readFileFromURL(url: URL)
+            }
+            guard let fileData = fileData else { throw NSError(domain: "File data is Empty", code: 0, userInfo: nil) }
+            let decodeData = try await TTMLParser().decodeTtml(data: fileData, coderType: .utf8)
+            return decodeData
+        } catch {
+            throw error
+        }
+    }
+}
+
 // MARK: Network
-extension AAMLResourceManager {
-    private enum AAMLNetworkError : Error {
+extension AMLLResourceManager {
+    private enum AMLLNetworkError : Error {
         case invalidUrl
     }
     
@@ -104,11 +126,11 @@ extension AAMLResourceManager {
 }
 
 // MARK: Read File
-extension AAMLResourceManager {
+extension AMLLResourceManager {
     // From FileSystem
     func readFileFromURL(url: URL?) async throws -> Data {
         guard let url = url else {
-            throw AAMLNetworkError.invalidUrl
+            throw AMLLNetworkError.invalidUrl
         }
         let fileData = try Data(contentsOf: url)
         return fileData
@@ -117,7 +139,7 @@ extension AAMLResourceManager {
     // From Cache
     private func readFileFromCache(url: URL?) async throws -> Data {
         guard let url = url else {
-            throw AAMLNetworkError.invalidUrl
+            throw AMLLNetworkError.invalidUrl
         }
         let fileManager = FileManager.default
         let cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
@@ -135,7 +157,7 @@ extension AAMLResourceManager {
     }
 }
 
-extension AAMLResourceManager {
+extension AMLLResourceManager {
     private func decodeLrcFileData(lrcData: Data, coderType: String.Encoding, withExtraInfo: Bool) async throws -> [LrcLyric] {
         try await withCheckedThrowingContinuation { continuation in
             let stream = InputStream(data: lrcData)
@@ -174,33 +196,33 @@ extension AAMLResourceManager {
         if (withExtraInfo) {
             // Title
             if parser.header.title != "" && parser.header.title != nil {
-                resArray.append(LrcLyric(lyric: parser.header.title!, indexNum: indexNum, time: 0.0))
+                resArray.append(LrcLyric(indexNum: indexNum,lyric: parser.header.title!,  time: 0.0))
                 indexNum = indexNum + 1
             }
             // Author
             if parser.header.author != "" && parser.header.author != nil {
-                resArray.append(LrcLyric(lyric: String(parser.header.author!), indexNum: indexNum, time: 0.0))
+                resArray.append(LrcLyric(indexNum: indexNum, lyric: String(parser.header.author!), time: 0.0))
                 indexNum = indexNum + 1
             }
             // Album
             if parser.header.album != "" && parser.header.album != nil {
-                resArray.append(LrcLyric(lyric: parser.header.album!, indexNum: indexNum, time: 0.0))
+                resArray.append(LrcLyric(indexNum: indexNum, lyric: parser.header.album!, time: 0.0))
                 indexNum = indexNum + 1
             }
             // By
             if parser.header.by != "" && parser.header.by != nil {
-                resArray.append(LrcLyric(lyric: parser.header.by!, indexNum: indexNum, time: 0.0))
+                resArray.append(LrcLyric(indexNum: indexNum, lyric: parser.header.by!, time: 0.0))
                 indexNum = indexNum + 1
             }
             // Editor
             if parser.header.editor != "" && parser.header.editor != nil {
-                resArray.append(LrcLyric(lyric: parser.header.editor!, indexNum: indexNum, time: 0.0))
+                resArray.append(LrcLyric(indexNum: indexNum, lyric: parser.header.editor!, time: 0.0))
                 indexNum = indexNum + 1
             }
         }
         // MARK: Lyrics
         for lyric in parser.lyrics {
-            resArray.append(LrcLyric(lyric: lyric.text, indexNum: indexNum, time: lyric.time))
+            resArray.append(LrcLyric(indexNum: indexNum,lyric: lyric.text, time: lyric.time))
             indexNum = indexNum + 1
         }
         

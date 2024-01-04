@@ -27,7 +27,6 @@ public struct LrcLyricsHeader {
 
 //MARK: .lrc解析类型
 public class LrcLyricsItem {
-    
     public init(time: TimeInterval, text: String = "") {
         self.time = time
         self.text = text
@@ -57,7 +56,6 @@ public class LrcLyricsParser {
     
     
     // MARK: Privates
-    
     private func parse(lyrics: String) {
         let quoteCharacterSet = CharacterSet(charactersIn: "\"")
         let lines = lyrics

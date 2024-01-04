@@ -18,12 +18,17 @@ public enum LyricURLType {
     case remote
 }
 
-public struct AAMLLrcConfig : Equatable {
+public enum TtmlLyricPositionType {
+    case main
+    case sub
+}
+
+public struct AMLLLrcConfig : Equatable {
     public var lrcType      : LyricsType
     public var lrcURLType   : LyricURLType
     public var lrcURL       : URL
     public var coderType    : String.Encoding
-
+    
     public init(lrcType: LyricsType, lrcURLType: LyricURLType, lrcURL: URL, coderType: String.Encoding = .utf8) {
         self.lrcType = lrcType
         self.lrcURLType = lrcURLType
@@ -32,7 +37,7 @@ public struct AAMLLrcConfig : Equatable {
     }
 }
 
-public struct AAMLViewConfig {
+public struct AMLLViewConfig {
     public var isCloseDefaultScroll : Bool
     public var mainFontSize         : Font
     public var mainFontColor        : Color
@@ -41,8 +46,8 @@ public struct AAMLViewConfig {
     public var highlightAnchor      : UnitPoint
     public var fontAnchor           : UnitPoint // .leading / .center / .trading
     public var transformAnimation   : Animation
-
-    public init(isCloseDefaultScroll: Bool = false, mainFontSize: Font, mainFontColor: Color, subFontSize: Font, subFontColor: Color, highlightAnchor: UnitPoint, fontAnchor: UnitPoint, transformAnimation: Animation) {
+    
+    public init(isCloseDefaultScroll: Bool, mainFontSize: Font, mainFontColor: Color, subFontSize: Font, subFontColor: Color, highlightAnchor: UnitPoint, fontAnchor: UnitPoint, transformAnimation: Animation) {
         self.isCloseDefaultScroll = isCloseDefaultScroll
         self.mainFontSize = mainFontSize
         self.mainFontColor = mainFontColor
@@ -54,25 +59,45 @@ public struct AAMLViewConfig {
     }
 }
 
-public let defaultAAMLViewConfig =  AAMLViewConfig(isCloseDefaultScroll: false,
-                                                   mainFontSize: .title,
+public let defaultAMLLViewConfig =  AMLLViewConfig(isCloseDefaultScroll: false,
+                                                   mainFontSize: .title2,
                                                    mainFontColor: .primary.opacity(0.8),
-                                                   subFontSize: .caption2,
+                                                   subFontSize: .subheadline,
                                                    subFontColor: .primary.opacity(0.8),
-                                                   highlightAnchor: UnitPoint(x: 0.5, y: 0.08),
+                                                   highlightAnchor: UnitPoint(x: 0.5, y: 0.22),
                                                    fontAnchor: .leading,
                                                    transformAnimation: .easeInOut)
 
-public class LrcLyric: Identifiable {
+public struct LrcLyric : Identifiable {
+    public var id = UUID()
     public var indexNum: Int
     public var lyric: String
     public var time: Double
+}
 
-    init(lyric: String, indexNum: Int, time: Double) {
-        self.lyric = lyric
-        self.indexNum = indexNum
-        self.time = time
-    }
+public struct TtmlLyric : Identifiable {
+    public var id = UUID()
+    public var indexNum     : Int
+    public var position     : TtmlLyricPositionType
+    public var beginTime    : TimeInterval
+    public var endTime      : TimeInterval
+    
+    public var mainLyric    : [SubTtmlLyric]?
+    public var bgLyric      : BgTtmlLyric?
+    public var translation  : String?
+    public var roman        : String?
+}
+
+public struct SubTtmlLyric {
+    public var beginTime : TimeInterval
+    public var endTime   : TimeInterval
+    public var text      : String
+}
+
+public struct BgTtmlLyric {
+    public var subLyric     : [SubTtmlLyric]?
+    public var translation  : String?
+    public var roman        : String?
 }
 
 // Add GBK
@@ -92,6 +117,6 @@ func loadGBKFile(fileURL: URL) -> String? {
     } catch {
         print("Error loading file: \(error)")
     }
-
+    
     return nil
 }
