@@ -16,15 +16,18 @@ public struct AMLLView: View {
     @State var viewConfig       : AMLLViewConfig = defaultAMLLViewConfig
     
     // MARK: Lyrics
-    @State var lrcLyricsArray           : [LrcLyric]?   = nil
-    @State var ttmlLyricsArray          : [TtmlLyric]?  = nil
+    @State private var lrcLyricsArray           : [LrcLyric]?   = nil
+    @State private var ttmlLyricsArray          : [TtmlLyric]?  = nil
     // MARK: Lyrics Hightlight
-    @State var lrcHightlightCellIndex   : Int  = -1
-    @State var ttmlHighlightCellIndex   : Int  = -1
+    @State private var lrcHightlightCellIndex   : Int  = -1
+    @State private var ttmlHighlightCellIndex   : Int  = -1
     // MARK: ScrollView
-    @State var isScrollViewGestrueScroll: Bool          = false
-    @State var inLongPress              : Bool          = false
-    @State var scorllValue              : CGFloat       = 0
+    @State private var isScrollViewGestrueScroll: Bool          = false
+    @State private var inLongPress              : Bool          = false
+    @State private var scorllValue              : CGFloat       = 0
+    // MARK: Private to TTMLLyricCell
+    @State private var singleFontWidth          : CGFloat = 0
+    @State private var singleFontHeight         : CGFloat = 0
     
     // MARK: seek
     public var onSeek: ((Double) -> Void)?
@@ -34,8 +37,7 @@ public struct AMLLView: View {
                 lrcConfig: Binding<AMLLLrcConfig?>,
                 viewConfig: AMLLViewConfig = defaultAMLLViewConfig,
                 onSeek: ((Double) -> Void)?
-    )
-    {
+    ) {
         self._playedTime = playedTime
         self._lrcConfig = lrcConfig
         self.viewConfig = viewConfig
@@ -159,6 +161,23 @@ public struct AMLLView: View {
                 }
                 .scrollDisabled(viewConfig.isCloseDefaultScroll)
                 .gesture(viewConfig.isCloseDefaultScroll ? sequencedGesture : nil)
+                .background {
+                    Text("A")
+                        .monospaced()
+                        .font(viewConfig.mainFontSize)
+                        .fixedSize(horizontal: true, vertical: true)
+                        .foregroundColor(.clear)
+                        .background {
+                            GeometryReader { gProxy in
+                                Color.clear.onAppear {
+                                    singleFontWidth  = gProxy.size.width
+                                    debugPrint("singleFontWidth:", gProxy.size.width)
+                                    singleFontHeight = gProxy.size.height
+                                    debugPrint("singleFontHeight:", gProxy.size.height)
+                                }
+                            }
+                        }
+                }
                 // MARK: calcHightlightCellChange
                 .onChange(of: ttmlHighlightCellIndex) { _, _ in
                     calcTtmlScrollViewNewHighlightCell(proxy: proxy)
@@ -200,7 +219,7 @@ public struct AMLLView: View {
 // MARK: Animation
 extension AMLLView {
     // Lrc
-    func calcLrcScrollViewDragEnd(proxy: ScrollViewProxy) {
+    private func calcLrcScrollViewDragEnd(proxy: ScrollViewProxy) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             withAnimation(viewConfig.transformAnimation) {
                 scorllValue = 0
@@ -214,7 +233,7 @@ extension AMLLView {
         }
     }
     // Lrc
-    func calcLrcScrollViewNewHightlightCell(proxy: ScrollViewProxy) {
+    private func calcLrcScrollViewNewHightlightCell(proxy: ScrollViewProxy) {
         if let lyricsCount = lrcLyricsArray?.count, lyricsCount >= 1, !isScrollViewGestrueScroll {
             DispatchQueue.main.async {
                 withAnimation(viewConfig.transformAnimation) {
@@ -226,7 +245,7 @@ extension AMLLView {
     }
     
     // Ttml
-    func calcTtmlScrollViewDragEnd(proxy: ScrollViewProxy) {
+    private func calcTtmlScrollViewDragEnd(proxy: ScrollViewProxy) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             withAnimation(viewConfig.transformAnimation) {
                 scorllValue = 0
@@ -240,7 +259,7 @@ extension AMLLView {
         }
     }
     // Ttml
-    func calcTtmlScrollViewNewHighlightCell(proxy: ScrollViewProxy){
+    private func calcTtmlScrollViewNewHighlightCell(proxy: ScrollViewProxy){
         if let lyricsCount = ttmlLyricsArray?.count, lyricsCount >= 1, !isScrollViewGestrueScroll {
             DispatchQueue.main.async {
                 withAnimation(viewConfig.transformAnimation) {
@@ -250,12 +269,11 @@ extension AMLLView {
             }
         }
     }
-    
 }
 
 // MARK: Update HighlightCellIndex
 extension AMLLView {
-    func updateLrcLyric(timePosition: Double) {
+    private func updateLrcLyric(timePosition: Double) {
         // Empty
         guard let lyricArray = self.lrcLyricsArray, !lyricArray.isEmpty else {
             DispatchQueue.main.async {
@@ -291,7 +309,7 @@ extension AMLLView {
         }
     }
     
-    func updateTtmlLyric(timePosition: Double) {
+    private func updateTtmlLyric(timePosition: Double) {
         // Empty
         guard let lyricArray = self.ttmlLyricsArray, !lyricArray.isEmpty else {
             DispatchQueue.main.async {
@@ -313,7 +331,7 @@ extension AMLLView {
 }
 
 // MARK: LyricCell - Lrc Type
-struct LrcLyricCell: View {
+fileprivate struct LrcLyricCell: View, Equatable {
     // MARK:
     @State   var lyric                  : LrcLyric
     @Binding var viewConfig             : AMLLViewConfig
@@ -329,6 +347,10 @@ struct LrcLyricCell: View {
     // MARK: Internal Display Value
     @State var isClick : Bool = false
     @State private var blurRadius: CGFloat = 1.2
+    
+    static func == (lhs: LrcLyricCell, rhs: LrcLyricCell) -> Bool {
+        lhs.lyric == rhs.lyric
+    }
     
     var body: some View {
         if (!lyric.lyric.isEmpty) {
@@ -396,18 +418,17 @@ struct LrcLyricCell: View {
 }
 
 // MARK: TTML Lyrics Cell
-struct TtmlLyricCell: View {
+fileprivate struct TtmlLyricCell: View, Equatable {
     // MARK:
-    @State   var lyric                  : TtmlLyric
-    @Binding var viewConfig             : AMLLViewConfig
-    @Binding var ttmlHighlightCellIndex : Int
-    @Binding var isScrollViewGestrueScroll : Bool
+    @State   var lyric                      : TtmlLyric
+    @Binding var viewConfig                 : AMLLViewConfig
+    @Binding var ttmlHighlightCellIndex     : Int
+    @Binding var isScrollViewGestrueScroll  : Bool
     
     @State var mainLyricText : String = ""
     @State var bgLyricText   : String = ""
-    @State var duration = 0.5 //  测试
 
-    @State var isHighlight              : Bool = false
+    @State private var isHighlight              : Bool = false
     
     // MARK: Seek
     public var onSeek: ((Double) -> Void)?
@@ -416,8 +437,14 @@ struct TtmlLyricCell: View {
     @State var isClick : Bool = false
     @State private var blurRadius: CGFloat = 1.2
     
+    static func == (lhs: TtmlLyricCell, rhs: TtmlLyricCell) -> Bool {
+        lhs.lyric == rhs.lyric
+    }
+    
     var body: some View {
         if (!(lyric.mainLyric?.isEmpty ?? true)) {
+            
+//            let _ = debugPrint("Update Cell:" , lyric.indexNum)
             
             LazyVStack(spacing: 0) {
                 // MARK: Main-Lyric
@@ -430,6 +457,7 @@ struct TtmlLyricCell: View {
                         .monospaced()
                         .font(viewConfig.mainFontSize).bold()
                         .foregroundColor(isHighlight ? viewConfig.mainFontColor : viewConfig.mainFontColor.opacity(0.8))
+                        .multilineTextAlignment((lyric.position == .main) ? .leading : .trailing)
                         .truncationMode(.tail)
                         .blur(radius: blurRadius)
                         .scaleEffect(isHighlight ? 1 : 0.88, anchor:  scaleEffectAnchor(viewConfig.fontAnchor))
@@ -516,7 +544,7 @@ struct TtmlLyricCell: View {
                             .monospaced()
                             .font(viewConfig.subFontSize).bold()
                             .blur(radius: blurRadius)
-                            .scaleEffect(isHighlight ? 1 : 0.88, anchor:  scaleEffectAnchor(viewConfig.fontAnchor))
+                            .scaleEffect(isHighlight ? 1 : 0.5, anchor: (lyric.position == .main) ? .topLeading : .topTrailing)
                             .padding(.horizontal, 10)
                             .padding(.vertical, isHighlight ? 8 : 0)
                             .opacity(isHighlight ? 0.9 : 0)
@@ -561,6 +589,81 @@ struct TtmlLyricCell: View {
     }
     
     func updateBlurRadius() {
-        blurRadius = isHighlight ? 0 : (isScrollViewGestrueScroll ? 0.5 : 1.2)
+        if isHighlight {
+            blurRadius = 0
+        } else if isScrollViewGestrueScroll {
+            blurRadius = 0.5
+        } else {
+            blurRadius = 1.2
+        }
+//        blurRadius = isHighlight ? 0 : ((isScrollViewGestrueScroll or isScrolling) ? 0.5 : 1.2)
+    }
+}
+
+fileprivate struct AnimatedMask: AnimatableModifier {
+    var viewConfig  : AMLLViewConfig
+    var isHighlight : Bool
+    var blurRadius  : CGFloat
+    var lyric       : TtmlLyric
+    var lyricText   : String
+    var phase       : CGFloat = 0
+    var textWidth   : CGFloat
+    var textHeight  : CGFloat
+    var lyricFont   : Font
+    var lineNumber  : Int // 当前Text有几行
+    
+    var animatableData: CGFloat {
+        get { phase }
+        set { phase = newValue }
+    }
+    
+    func body(content: Content) -> some View {
+        if isHighlight {
+            content
+                .overlay(OverlayView(width: textWidth, maskHeight: textHeight, progress: phase, lineNumber: lineNumber))
+                .mask(MaskTextView(lyricText: lyricText, font: lyricFont))
+                .blur(radius: blurRadius)
+                .scaleEffect(isHighlight ? 1 : 0.88, anchor: scaleEffectAnchor(viewConfig.fontAnchor))
+        } else {
+            content
+        }
+    }
+    
+    func scaleEffectAnchor(_ viewConfigAnchor: UnitPoint) -> UnitPoint {
+        if (viewConfigAnchor == .center) { return .center }
+        if (lyric.position == .main) { return viewConfigAnchor }
+        let x = viewConfigAnchor.x
+        let y = viewConfigAnchor.y
+        return UnitPoint(x: 1-x, y: 1-y)
+    }
+}
+
+fileprivate struct OverlayView: View {
+    let width       : CGFloat
+    let maskHeight  : CGFloat
+    let progress    : CGFloat
+    let lineNumber  : Int
+    var body: some View {
+        Path() { path in
+            for i in 0...1 {
+                let yValue : CGFloat = (18 * CGFloat(i+1)) + (20 * CGFloat(i))
+                path.move(to: CGPoint(x: 0, y: yValue))
+                path.addLine(to: CGPoint(x: width, y: yValue))
+            }
+        }
+        .trim(from: 0, to: progress)
+        .stroke(lineWidth: maskHeight)
+    }
+}
+
+
+fileprivate struct MaskTextView : View {
+    var lyricText : String
+    var font : Font
+    var body: some View {
+        Text(lyricText)
+            .monospaced()
+            .font(font)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }

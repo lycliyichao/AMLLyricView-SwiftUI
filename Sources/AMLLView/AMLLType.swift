@@ -68,14 +68,18 @@ public let defaultAMLLViewConfig =  AMLLViewConfig(isCloseDefaultScroll: false,
                                                    fontAnchor: .leading,
                                                    transformAnimation: .easeInOut)
 
-public struct LrcLyric : Identifiable {
+public struct LrcLyric : Identifiable, Equatable {
     public var id = UUID()
     public var indexNum: Int
     public var lyric: String
     public var time: Double
+    
+    public static func == (lhs: LrcLyric, rhs: LrcLyric) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
-public struct TtmlLyric : Identifiable {
+public struct TtmlLyric : Identifiable, Equatable {
     public var id = UUID()
     public var indexNum     : Int
     public var position     : TtmlLyricPositionType
@@ -86,6 +90,10 @@ public struct TtmlLyric : Identifiable {
     public var bgLyric      : BgTtmlLyric?
     public var translation  : String?
     public var roman        : String?
+    
+    public static func == (lhs: TtmlLyric, rhs: TtmlLyric) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 public struct SubTtmlLyric {
